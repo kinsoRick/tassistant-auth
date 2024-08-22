@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Вход на сайт</title>
+    <style>
+        /* Основные стили */
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        .container {
+            background: #f7f7f7;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+
+        .warning {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2a5298;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-align: left;
+            color: #555;
+        }
+
+        input[type="text"], input[type="password"], input[type="tel"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: none;
+            box-shadow: inset 5px 5px 10px #ccc, inset -5px -5px 10px #fff;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus, input[type="tel"]:focus {
+            box-shadow: inset 5px 5px 10px #aaa, inset -5px -5px 10px #ddd;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            background: #2a5298;
+            color: white;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            background: #1e3c72;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+        }
+
+        .back-btn {
+            display: block;
+            margin-top: 10px;
+            text-align: left;
+            color: #2a5298;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+
+        .error-message {
+            color: crimson;
+        }
+    </style>
+</head>
+<body>
+{% if session.session_string %}
+<div class="container">
+    <p class="success">
+        Скопируйте команду кнопкой ниже <br>
+        В нём содержится ваш токен, не показывайте команду другим людям! <br>
+        Вставьте эту команду в нашего бота
+    </p>
+    <button class="btn" onclick="copySessionString()"> Скопировать команду</button>
+</div>
+{% else %}
+
+<div class="container">
+    <!-- Заголовок -->
+    <div class="title">Tassistant Provider</div>
+
+    <!-- Предупреждение -->
+    <div class="warning">
+        Внимание: Сайт и бот Tassistant Provider не имеют никакого отношения к приложению или сервису Telegram.
+        Передавая данные от аккаунта, вы соглашаетесь с правилами использования продукта и не имеете никаких претензий к
+        самому Telegram.
+    </div>
+
+    <p class="error-message">{{ error }}</p>
+
+
+    <!-- Форма для ввода номера телефона -->
+    <form method="POST" action="/">
+
+        <input type="hidden" name="step" value="{{ step }}">
+
+        <div id="step-1" class="step {{ 'active' if step == 1 else '' }}">
+            <div class="form-group">
+                <label for="phone">Введите номер телефона:</label>
+                <input type="tel" name="phone" id="phone" placeholder="+7 123 456 7890">
+            </div>
+            <button class="btn" type="submit">Отправить код</button>
+        </div>
+
+        <!-- Форма для ввода кода -->
+        <div id="step-2" class="step {{ 'active' if step == 2 else '' }}">
+            <div class="form-group">
+                <label for="code">Введите код из Telegram:</label>
+                <input type="text" name="code" id="code" placeholder="Введите код">
+            </div>
+            <button class="btn" type="submit">Подтвердить код</button>
+            <span class="back-btn" onclick="previousStep(1)">Назад</span>
+        </div>
+
+        <!-- Форма для ввода 2FA пароля -->
+        <div id="step-3" class="step {{ 'active' if step == 3 else '' }}">
+            <div class="form-group">
+                <label for="2fa">Введите 2FA пароль:</label>
+                <input type="password" name="2fa" id="2fa" placeholder="Введите 2FA пароль">
+            </div>
+            <button class="btn" type="submit">Войти</button>
+            <span class="back-btn" onclick="previousStep(2)">Назад</span>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+
+<script>
+    function nextStep(step) {
+        document.querySelector('.step.active').classList.remove('active');
+        document.getElementById('step-' + step).classList.add('active');
+    }
+
+    function previousStep(step) {
+        document.querySelector('.step.active').classList.remove('active');
+        document.getElementById('step-' + step).classList.add('active');
+    }
+
+    {% if session.session_string %}
+
+    function copySessionString () {
+        navigator.clipboard.writeText("/привязать {{ session.session_string }}")
+    }
+
+    {% endif %}
+</script>
+</body>
+</html>

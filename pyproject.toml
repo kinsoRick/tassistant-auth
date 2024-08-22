@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "tassitant-provider"
+version = "0.1.0"
+description = ""
+authors = ["kinsoRick <kmasnaveev@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyrogram = "^2.0.106"
+quart = "^0.19.6"
+tgcrypto = "^1.2.5"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
