@@ -9,6 +9,8 @@ app.secret_key = os.environ.get("SECRET_KEY")
 
 app_id = os.environ.get("PYRO_APP_ID")
 app_hash = os.environ.get("PYRO_APP_HASH")
+
+print(app_id, app_hash)
 clients = {}
 
 
@@ -83,5 +85,18 @@ async def home():
     return await render_template('index.html', step=int(step))
 
 
+@app.route('/clear_session', methods=['POST'])
+async def clear_session():
+    session.clear()
+
+    return '', 204
+
+@app.route('/set_step', methods=['POST'])
+async def set_step():
+    data = await request.json
+    session['step'] = data.get('step', 1)
+    return '', 204  # Возвращаем успешный пустой ответ
+
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000)
+    app.run(port=5000)
+

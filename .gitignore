@@ -4,3 +4,4 @@ pyproject.toml
 .idea/
 
 __pycache__/
+bot.py
